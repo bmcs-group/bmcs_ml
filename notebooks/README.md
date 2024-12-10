@@ -1,1 +1,0 @@
-# Notebooks demonstrating the functionality implemented in the package
