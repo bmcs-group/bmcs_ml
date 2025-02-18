@@ -16,7 +16,7 @@ from bmcs_ml.version import __version__
 NAME = 'bmcs_ml'
 DESCRIPTION = "Suite of utilities for material model development."
 URL = 'https://github.com/bmcs-group/bmcs_ml'
-EMAIL = 'adelpasand@imb.rwt-aachen.de'
+EMAIL = 'adelpasand@imb.rwth-aachen.de'
 AUTHOR = 'BMCS-Group'
 REQUIRES_PYTHON = '>=3.9.0'
 VERSION = __version__
