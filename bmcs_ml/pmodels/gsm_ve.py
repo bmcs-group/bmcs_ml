@@ -10,7 +10,7 @@ sp.init_printing()
 
 class GSM_VE(tr.HasTraits):
     # Define symbols
-    training_data_dir = tr.Directory(Path.home() / 'bmcs_training_data')
+    training_data_dir = tr.Directory(Path.home() / 'bmcs_training_data' / 've')
     problem_name = tr.Str('default_problem')
     
     @property
