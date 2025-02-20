@@ -10,7 +10,7 @@ sp.init_printing()
 
 class GSM_VE(tr.HasTraits):
     # Define symbols
-    training_data_dir = tr.Directory(Path.home() / 'bmcs_training_data' / 've')
+    training_data_dir = tr.Directory(Path.home() / 'bmcs_training_data')
     problem_name = tr.Str('default_problem')
     
     @property
@@ -181,3 +181,12 @@ class GSM_VE(tr.HasTraits):
         ax3.set_ylabel('Stress [Pa]')
         ax3.legend()
         ax3.set_title('Stress-Strain Response')
+        
+    def save_figure(self, fig):
+        # Convert data_dir to a Path object
+        save_path = self.data_dir / f'{self.problem_name}.png'
+        
+        # Save the figure
+        fig.savefig(save_path, dpi=300, bbox_inches="tight")
+        
+        print(f"Figure saved at: {save_path}")
