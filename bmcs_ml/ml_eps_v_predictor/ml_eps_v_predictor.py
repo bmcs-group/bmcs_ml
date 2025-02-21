@@ -1,4 +1,3 @@
-
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torch.nn as nn
@@ -118,15 +117,56 @@ def train_nn(dataset, epochs=100, batch_size=32, initial_lr=0.01, lr_decay=0.99,
 def evaluate_model(model, dataset):
     dataloader = DataLoader(dataset, batch_size=32, shuffle=False)
     model.eval()
-    total_loss = 0
     criterion = nn.MSELoss()
+    all_targets = []
+    all_predictions = []
+    total_loss = 0
     
     with torch.no_grad():
         for inputs, target in dataloader:
             outputs = model(inputs).squeeze()
             loss = criterion(outputs, target)
             total_loss += loss.item()
+            
+            all_targets.append(target.numpy())
+            all_predictions.append(outputs.numpy())
     
     avg_loss = total_loss / len(dataloader)
-    print(f"Model Evaluation Loss: {avg_loss:.6f}")
+    print(f"Model Evaluation Loss: {avg_loss}")
+
+    # Convert lists to numpy arrays
+    all_targets = np.concatenate(all_targets)
+    all_predictions = np.concatenate(all_predictions)
+
+    # Plot Predictions vs. Ground Truth
+    plt.figure(figsize=(6, 6))
+    plt.scatter(all_targets, all_predictions, alpha=0.5, label="Predicted vs Actual")
+    plt.plot([min(all_targets), max(all_targets)], [min(all_targets), max(all_targets)], 'r--', label="Ideal Fit")
+    plt.xlabel("Actual Viscoelastic Strain")
+    plt.ylabel("Predicted Viscoelastic Strain")
+    plt.title("Predicted vs Actual Viscoelastic Strain")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    # Residual Plot (Errors)
+    residuals = all_predictions - all_targets
+    plt.figure(figsize=(6, 4))
+    plt.scatter(all_targets, residuals, alpha=0.5)
+    plt.axhline(y=0, color='r', linestyle='--')
+    plt.xlabel("Actual Viscoelastic Strain")
+    plt.ylabel("Residual (Error)")
+    plt.title("Residual Plot")
+    plt.grid()
+    plt.show()
+
+    # Histogram of Residuals
+    plt.figure(figsize=(6, 4))
+    plt.hist(residuals, bins=30, edgecolor='black', alpha=0.7)
+    plt.xlabel("Residuals (Prediction Error)")
+    plt.ylabel("Frequency")
+    plt.title("Residual Distribution")
+    plt.grid()
+    plt.show()
+
     return avg_loss
