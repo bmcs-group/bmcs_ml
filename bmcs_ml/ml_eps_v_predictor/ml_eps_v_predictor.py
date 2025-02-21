@@ -75,7 +75,13 @@ class VE_TimeIntegrationPredictor(nn.Module):
         return self.fc5(x)
 
 # Training function with shuffle option
-def train_nn(dataset, epochs=100, batch_size=32, initial_lr=0.01, lr_decay=0.99, shuffle=True):
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+from torch.utils.data import DataLoader
+
+def train_nn(dataset, epochs=100, batch_size=32, initial_lr=0.01, lr_decay=0.99, shuffle=True, model_filename="ve_ivp_e100_b32.pth"):
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
     model = VE_TimeIntegrationPredictor()
     criterion = nn.MSELoss()
@@ -109,9 +115,12 @@ def train_nn(dataset, epochs=100, batch_size=32, initial_lr=0.01, lr_decay=0.99,
     plt.grid()
     plt.show()
     
-    torch.save(model.state_dict(), "ve_timeintegration_predictor.pth")
-    print("Surrogate model saved as ve_timeintegration_predictor.pth")
+    # Save the trained model with the specified filename
+    torch.save(model.state_dict(), model_filename)
+    print(f"Surrogate model saved as {model_filename}")
+    
     return model
+
 
 # Model evaluation function
 def evaluate_model(model, dataset):
