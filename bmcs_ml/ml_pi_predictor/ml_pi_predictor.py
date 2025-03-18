@@ -72,11 +72,7 @@ class VE_TimeIntegrationPredictor(nn.Module):
         return self.fc5(x)
 
 # Training function with shuffle option
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader
+
 
 def train_nn(dataset, epochs=100, batch_size=32, initial_lr=0.01, lr_decay=0.99, shuffle=True, model_filename="ve_pi_p_e100_b32.pth"):
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
