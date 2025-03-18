@@ -38,7 +38,7 @@ class ViscoelasticDataset(Dataset):
                 eps_v_t = Pi_data[:, 2]  # Viscoelastic strain history
                 d_t = Pi_data[:, 3]      # Time step history
                 pi_n1 = Pi_data[:, 4]    # Total energy history
-                # Define target: 
+                
                 y = pi_n1
                 X = np.column_stack([eps_t, d_eps_t, eps_v_t, d_t])  # Use full dataset
                 X_data.append(X)
@@ -57,32 +57,32 @@ class ViscoelasticDataset(Dataset):
 class VE_TimeIntegrationPredictor(nn.Module):
     def __init__(self):
         super(VE_TimeIntegrationPredictor, self).__init__()
-        self.fc1 = nn.Linear(4, 256)
-        self.fc2 = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, 128)
-        self.fc4 = nn.Linear(128, 64)
-        self.fc5 = nn.Linear(64, 1)
-        self.relu = nn.ReLU()
+        self.fc1 = nn.Linear(4, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 256)
+        self.fc4 = nn.Linear(256, 128)
+        self.fc5 = nn.Linear(128, 64)
+        self.fc6 = nn.Linear(64, 1)
+        
+        # Improved activation functions
+        self.swish = lambda x: x * torch.sigmoid(x)  # Swish activation for smooth nonlinear transitions
+        self.elu = nn.ELU(alpha=1.0)  # ELU to prevent vanishing gradients
+        self.dropout = nn.Dropout(p=0.2)  # Dropout 
     
     def forward(self, x):
-        x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = self.relu(self.fc3(x))
-        x = self.relu(self.fc4(x))
-        return self.fc5(x)
+        x = self.swish(self.fc1(x))
+        x = self.dropout(self.swish(self.fc2(x)))
+        x = self.swish(self.fc3(x))
+        x = self.elu(self.fc4(x))
+        x = self.elu(self.fc5(x))
+        return self.fc6(x)
 
 # Training function with shuffle option
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import matplotlib.pyplot as plt
-from torch.utils.data import DataLoader
-
 def train_nn(dataset, epochs=100, batch_size=32, initial_lr=0.01, lr_decay=0.99, shuffle=True, model_filename="ve_pi_p_e100_b32.pth"):
     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)
     model = VE_TimeIntegrationPredictor()
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=initial_lr)
+    optimizer = optim.AdamW(model.parameters(), lr=initial_lr, weight_decay=1e-4)  # AdamW for better weight regularization
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=lr_decay)
     
     loss_history = []
@@ -112,12 +112,11 @@ def train_nn(dataset, epochs=100, batch_size=32, initial_lr=0.01, lr_decay=0.99,
     plt.grid()
     plt.show()
     
-    # Save the trained model with the specified filename
+    # Save the trained model
     torch.save(model.state_dict(), model_filename)
     print(f"Surrogate model saved as {model_filename}")
     
     return model
-
 
 # Model evaluation function
 def evaluate_model(model, dataset):
@@ -139,40 +138,5 @@ def evaluate_model(model, dataset):
     
     avg_loss = total_loss / len(dataloader)
     print(f"Model Evaluation Loss: {avg_loss}")
-
-    # Convert lists to numpy arrays
-    all_targets = np.concatenate(all_targets)
-    all_predictions = np.concatenate(all_predictions)
-
-    # Plot Predictions vs. Ground Truth
-    plt.figure(figsize=(6, 6))
-    plt.scatter(all_targets, all_predictions, alpha=0.5, label="Predicted vs Actual")
-    plt.plot([min(all_targets), max(all_targets)], [min(all_targets), max(all_targets)], 'r--', label="Ideal Fit")
-    plt.xlabel("Actual total energy")
-    plt.ylabel("Predicted total energy")
-    plt.title("Predicted vs Actual total energy")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    # Residual Plot (Errors)
-    residuals = all_predictions - all_targets
-    plt.figure(figsize=(6, 4))
-    plt.scatter(all_targets, residuals, alpha=0.5)
-    plt.axhline(y=0, color='r', linestyle='--')
-    plt.xlabel("Actual total energy")
-    plt.ylabel("Residual (Error)")
-    plt.title("Residual Plot")
-    plt.grid()
-    plt.show()
-
-    # Histogram of Residuals
-    plt.figure(figsize=(6, 4))
-    plt.hist(residuals, bins=30, edgecolor='black', alpha=0.7)
-    plt.xlabel("Residuals (Prediction Error)")
-    plt.ylabel("Frequency")
-    plt.title("Residual Distribution")
-    plt.grid()
-    plt.show()
-
+    
     return avg_loss
